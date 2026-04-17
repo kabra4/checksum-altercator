@@ -5,85 +5,221 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Checksum Altercator</title>
 <style>
-  :root { color-scheme: light dark; }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    max-width: 640px;
-    margin: 40px auto;
-    padding: 0 20px;
-    line-height: 1.5;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    color: #1a1a2e;
   }
-  h1 { margin-bottom: 4px; }
-  p.subtitle { color: #888; margin-top: 0; }
+
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 36px;
+    max-width: 640px;
+    width: 100%;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+  }
+
+  header { text-align: center; margin-bottom: 28px; }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle { color: #6b7280; font-size: 15px; margin-top: 6px; }
+
   .drop {
-    border: 2px dashed #aaa;
-    border-radius: 10px;
-    padding: 40px 20px;
+    position: relative;
+    border: 3px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 56px 24px;
     text-align: center;
     cursor: pointer;
-    transition: border-color .15s, background .15s;
+    transition: all 0.2s ease;
+    background: #f8fafc;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
   }
-  .drop.hover { border-color: #4a9eff; background: rgba(74,158,255,0.08); }
+  .drop:hover { border-color: #818cf8; background: #f5f3ff; }
+  .drop.hover {
+    border-color: #667eea;
+    background: #ede9fe;
+    transform: scale(1.01);
+  }
+  .drop.has-file { border-color: #10b981; background: #ecfdf5; border-style: solid; }
+
   .drop input { display: none; }
+  .drop .icon {
+    width: 56px; height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: #e0e7ff;
+    color: #667eea;
+  }
+  .drop.has-file .icon { background: #d1fae5; color: #10b981; }
+  .drop .icon svg { width: 28px; height: 28px; }
+  .drop .title-text { font-size: 18px; font-weight: 600; color: #1e293b; }
+  .drop .hint { font-size: 13px; color: #64748b; }
+  .drop .filesize { font-size: 13px; color: #10b981; font-weight: 500; }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .byte-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #475569;
+  }
+  .byte-field input {
+    width: 80px;
+    padding: 8px 10px;
+    font-size: 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .byte-field input:focus {
+    outline: none;
+    border-color: #667eea;
+  }
+
   button {
-    font-size: 16px;
-    padding: 10px 18px;
+    flex: 1;
+    min-width: 160px;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 22px;
     border: none;
-    border-radius: 6px;
-    background: #4a9eff;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
     cursor: pointer;
-    margin-top: 16px;
+    transition: transform 0.1s, box-shadow 0.15s, opacity 0.15s;
+    box-shadow: 0 4px 14px rgba(102,126,234,0.4);
   }
-  button:disabled { background: #888; cursor: not-allowed; }
-  label.count {
-    display: block;
-    margin-top: 16px;
-    font-size: 14px;
+  button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(102,126,234,0.5);
   }
-  input[type=number] {
-    width: 80px;
-    padding: 4px 8px;
-    font-size: 14px;
+  button:active:not(:disabled) { transform: translateY(0); }
+  button:disabled {
+    background: #cbd5e1;
+    color: #64748b;
+    cursor: not-allowed;
+    box-shadow: none;
   }
+
   .result {
     margin-top: 24px;
-    padding: 16px;
-    border-radius: 8px;
-    background: rgba(128,128,128,0.1);
+    padding: 18px;
+    border-radius: 12px;
+    background: #f1f5f9;
     font-size: 13px;
-    word-break: break-all;
+    display: none;
   }
-  .result .row { margin: 6px 0; }
-  .result .label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
-  .result code { font-family: "SF Mono", Menlo, Consolas, monospace; }
-  .err { color: #d33; margin-top: 12px; }
+  .result.show { display: block; }
+  .result .row { margin-bottom: 12px; }
+  .result .row:last-child { margin-bottom: 0; }
+  .result .label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+  .result code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    word-break: break-all;
+    color: #1e293b;
+    font-size: 12px;
+  }
+  .result .new-hash code {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+  }
+
+  .err {
+    color: #dc2626;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #fef2f2;
+    border-radius: 8px;
+    font-size: 13px;
+    display: none;
+  }
+  .err.show { display: block; }
+
+  @media (max-width: 480px) {
+    .card { padding: 24px; }
+    h1 { font-size: 24px; }
+    .drop { padding: 40px 16px; min-height: 180px; }
+    button { width: 100%; flex: none; }
+  }
 </style>
 </head>
 <body>
-<h1>Checksum Altercator</h1>
-<p class="subtitle">Append random bytes so file content differs but stays readable. PDF / JPG / PNG.</p>
+  <div class="card">
+    <header>
+      <h1>Checksum Altercator</h1>
+      <p class="subtitle">Append random bytes — new SHA-256 every time, file stays valid</p>
+    </header>
 
-<label class="drop" id="drop">
-  <input type="file" id="file">
-  <div id="dropText">Click or drop file here</div>
-</label>
+    <label class="drop" id="drop">
+      <input type="file" id="file">
+      <div class="icon" id="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div class="title-text" id="dropTitle">Drop file or click to browse</div>
+      <div class="hint" id="dropHint">PDF, JPG, PNG supported</div>
+    </label>
 
-<label class="count">
-  Random bytes to append:
-  <input type="number" id="byteCount" value="16" min="1" max="1024">
-</label>
+    <div class="controls">
+      <div class="byte-field">
+        <span>Random bytes:</span>
+        <input type="number" id="byteCount" value="16" min="1" max="1024">
+      </div>
+      <button id="go" disabled>Alter &amp; Download</button>
+    </div>
 
-<button id="go" disabled>Alter &amp; Download</button>
-
-<div id="err" class="err"></div>
-<div id="result" class="result" style="display:none"></div>
+    <div id="err" class="err"></div>
+    <div id="result" class="result"></div>
+  </div>
 
 <script>
 const drop = document.getElementById('drop');
 const fileInput = document.getElementById('file');
-const dropText = document.getElementById('dropText');
+const dropTitle = document.getElementById('dropTitle');
+const dropHint = document.getElementById('dropHint');
 const goBtn = document.getElementById('go');
 const result = document.getElementById('result');
 const errEl = document.getElementById('err');
@@ -91,11 +227,30 @@ const byteCountInput = document.getElementById('byteCount');
 
 let selectedFile = null;
 
+function showErr(msg) {
+  errEl.textContent = msg;
+  errEl.classList.toggle('show', !!msg);
+}
+
+function fmtSize(n) {
+  if (n < 1024) return `${n} bytes`;
+  if (n < 1024 * 1024) return `${(n/1024).toFixed(1)} KB`;
+  return `${(n/1024/1024).toFixed(2)} MB`;
+}
+
 function setFile(f) {
   selectedFile = f;
-  dropText.textContent = f ? `${f.name} (${f.size.toLocaleString()} bytes)` : 'Click or drop file here';
+  if (f) {
+    dropTitle.textContent = f.name;
+    dropHint.innerHTML = `<span class="filesize">${fmtSize(f.size)}</span>`;
+    drop.classList.add('has-file');
+  } else {
+    dropTitle.textContent = 'Drop file or click to browse';
+    dropHint.textContent = 'PDF, JPG, PNG supported';
+    drop.classList.remove('has-file');
+  }
   goBtn.disabled = !f;
-  errEl.textContent = '';
+  showErr('');
 }
 
 fileInput.addEventListener('change', e => setFile(e.target.files[0] || null));
@@ -137,7 +292,7 @@ function alteredName(orig) {
 
 goBtn.addEventListener('click', async () => {
   if (!selectedFile) return;
-  errEl.textContent = '';
+  showErr('');
   goBtn.disabled = true;
   goBtn.textContent = 'Working...';
 
@@ -158,14 +313,23 @@ goBtn.addEventListener('click', async () => {
 
     download(out, newName);
 
-    result.style.display = 'block';
+    result.classList.add('show');
     result.innerHTML = `
-      <div class="row"><div class="label">Original SHA-256</div><code>${origHash}</code></div>
-      <div class="row"><div class="label">New SHA-256</div><code>${newHash}</code></div>
-      <div class="row"><div class="label">Appended</div>${n} random bytes &rarr; saved as <code>${newName}</code></div>
+      <div class="row">
+        <div class="label">Original SHA-256</div>
+        <code>${origHash}</code>
+      </div>
+      <div class="row new-hash">
+        <div class="label">New SHA-256</div>
+        <code>${newHash}</code>
+      </div>
+      <div class="row">
+        <div class="label">Result</div>
+        <code>Appended ${n} random bytes &rarr; ${newName}</code>
+      </div>
     `;
   } catch (e) {
-    errEl.textContent = 'Error: ' + e.message;
+    showErr('Error: ' + e.message);
   } finally {
     goBtn.disabled = false;
     goBtn.textContent = 'Alter & Download';
